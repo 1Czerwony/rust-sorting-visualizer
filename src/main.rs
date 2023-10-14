@@ -47,7 +47,9 @@ fn main() -> Result<(), String> {
 
         shuffle_array(&mut rect_arr);
 
-        cocktail_sort(&mut canvas, &mut rect_arr)?;
+        if cocktail_sort(&mut canvas, &mut rect_arr)? {
+            break 'running;
+        }
 
     }
 
