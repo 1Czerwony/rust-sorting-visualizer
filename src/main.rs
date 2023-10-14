@@ -7,7 +7,7 @@ use rand::seq::SliceRandom;
 const SCREEN_WIDTH: u32 = 800;
 const SCREEN_HEIGHT: u32 = 600;
 const RECT_WIDTH: u32 = 6;
-const FPS: u32 = 100;
+const FPS: u32 = 200;
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
