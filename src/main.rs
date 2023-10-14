@@ -1,13 +1,13 @@
 use std::time::Duration;
 
-use sdl2::{render::WindowCanvas, pixels::Color, rect::Rect};
+use sdl2::{render::WindowCanvas, pixels::Color, rect::Rect, Sdl};
 
 use rand::seq::SliceRandom;
 
 const SCREEN_WIDTH: u32 = 800;
 const SCREEN_HEIGHT: u32 = 600;
 const RECT_WIDTH: u32 = 6;
-const FPS: u32 = 200;
+const FPS: u32 = 100;
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
@@ -39,17 +39,20 @@ fn main() -> Result<(), String> {
         // draw
         shuffle_array(&mut rect_arr);
 
-        counting_sort(&mut canvas, &mut rect_arr)?;
+        counting_sort(&mut canvas, &mut rect_arr, &sdl_context)?;
+        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 1));
 
         shuffle_array(&mut rect_arr);
 
-        comb_sort(&mut canvas, &mut rect_arr)?;
+        comb_sort(&mut canvas, &mut rect_arr, &sdl_context)?;
+        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 1));
+
 
         shuffle_array(&mut rect_arr);
 
-        if cocktail_sort(&mut canvas, &mut rect_arr)? {
-            break 'running;
-        }
+        cocktail_sort(&mut canvas, &mut rect_arr, &sdl_context)?;
+        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 1));
+
 
     }
 
@@ -95,7 +98,18 @@ fn draw_vec(canvas: &mut WindowCanvas, rect_arr: &[Rect], highlighted: &[usize])
     Ok(())
 }
 
-fn counting_sort(canvas: &mut WindowCanvas, rect_arr: &mut [Rect]) -> Result<bool, String> {
+fn handle_events(sdl_context: &Sdl) -> Result<(), String> {
+    for event in sdl_context.event_pump()?.poll_iter() {
+        match event {
+            sdl2::event::Event::Quit {..} => Err("quit")?,
+            _ => {},
+        }
+    }
+
+    Ok(())
+}
+
+fn counting_sort(canvas: &mut WindowCanvas, rect_arr: &mut [Rect], sdl_context: &Sdl) -> Result<bool, String> {
 
     let max: u32 = max_height(rect_arr);
  
@@ -111,6 +125,9 @@ fn counting_sort(canvas: &mut WindowCanvas, rect_arr: &mut [Rect]) -> Result<boo
 
     let mut output = vec![0; rect_arr.len()];
     for i in (0..rect_arr.len() as usize).rev() {
+        
+        handle_events(sdl_context)?;
+
         output[count[(rect_arr[i].height() as usize) - 1] as usize] = rect_arr[i].height();
         count[rect_arr[i].height() as usize] -= 1;
 
@@ -119,8 +136,12 @@ fn counting_sort(canvas: &mut WindowCanvas, rect_arr: &mut [Rect]) -> Result<boo
     }
 
     for i in 0..rect_arr.len() {
+
+        handle_events(sdl_context)?;
+
         rect_arr[i].set_height(output[i]);
         rect_arr[i].set_bottom(SCREEN_HEIGHT as i32);
+
         draw_vec(canvas, rect_arr, &[i])?;
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FPS));
     }
@@ -128,7 +149,7 @@ fn counting_sort(canvas: &mut WindowCanvas, rect_arr: &mut [Rect]) -> Result<boo
     Ok(true)
 }
 
-fn comb_sort(canvas: &mut WindowCanvas, rect_arr: &mut [Rect]) -> Result<bool, String> {
+fn comb_sort(canvas: &mut WindowCanvas, rect_arr: &mut [Rect], sdl_context: &Sdl) -> Result<bool, String> {
     let mut gap = rect_arr.len();
 
     let mut swapped = 1;
@@ -142,6 +163,8 @@ fn comb_sort(canvas: &mut WindowCanvas, rect_arr: &mut [Rect]) -> Result<bool, S
         swapped = 0;
 
         for i in 0..(rect_arr.len() - gap) {
+            handle_events(sdl_context)?;
+
             draw_vec(canvas, rect_arr, &[i, i + gap])?;
             ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FPS));
 
@@ -160,7 +183,7 @@ fn comb_sort(canvas: &mut WindowCanvas, rect_arr: &mut [Rect]) -> Result<bool, S
     Ok(true)
 }
 
-fn cocktail_sort(canvas: &mut WindowCanvas, rect_arr: &mut [Rect]) -> Result<bool, String> {
+fn cocktail_sort(canvas: &mut WindowCanvas, rect_arr: &mut [Rect], sdl_context: &Sdl) -> Result<bool, String> {
     let mut swapped = true;
     let mut start = 0;
     let mut end = rect_arr.len() - 1;
@@ -169,6 +192,7 @@ fn cocktail_sort(canvas: &mut WindowCanvas, rect_arr: &mut [Rect]) -> Result<boo
         swapped = false;
 
         for i in 0..end {
+            handle_events(sdl_context)?;
             draw_vec(canvas, rect_arr, &[i, i + 1])?;
             ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FPS));
 
@@ -190,6 +214,7 @@ fn cocktail_sort(canvas: &mut WindowCanvas, rect_arr: &mut [Rect]) -> Result<boo
         end -= 1;
 
         for i in (start..end).rev() {
+            handle_events(sdl_context)?;
             draw_vec(canvas, rect_arr, &[i, i + 1])?;
             ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FPS));
 
